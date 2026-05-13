@@ -1,0 +1,16 @@
+{
+  "name": "anna-mini-notes",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Mini Notes Anna App with a static UI bundle and a local Executa summarizer.",
+  "scripts": {
+    "dev": "node scripts/anna-app-with-uv-path.mjs dev",
+    "doctor": "node scripts/anna-app-with-uv-path.mjs doctor",
+    "validate": "anna-app validate --strict",
+    "test:tool": "python tests/test_tool_contract.py",
+    "test": "npm run test:tool"
+  },
+  "devDependencies": {
+    "@anna-ai/cli": "^0.1.9"
+  }
+}

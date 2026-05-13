@@ -1,0 +1,18 @@
+[project]
+name = "tool-test-mini-notes-12345678"
+version = "1.0.0"
+description = "Mini Notes Summarizer - Executa stdio tool plugin"
+requires-python = ">=3.9"
+authors = [{ name = "Mini Notes" }]
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+"tool-test-mini-notes-12345678" = "mini_notes_plugin:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["mini_notes_plugin"]

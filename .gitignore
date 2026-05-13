@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+npm-debug.log*
+anna-dev.*.log
+*.pdf

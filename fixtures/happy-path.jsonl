@@ -1,0 +1,5 @@
+{"kind":"meta","t":0,"schema":1,"app":"mini-notes"}
+{"kind":"req","t":20,"id":1,"ns":"window","method":"hello","args":{}}
+{"kind":"res","t":22,"id":1,"ok":true,"result":{"wid":"dev-wid","user_id":1}}
+{"kind":"req","t":100,"id":2,"ns":"tools","method":"invoke","args":{"tool_id":"tool-test-mini-notes-12345678","method":"summarize","args":{"notes":[{"order":1,"content":"修复登录 bug"},{"order":2,"content":"跟设计沟通需求"},{"order":3,"content":"准备 workshop 提纲"}]}}}
+{"kind":"res","t":118,"id":2,"ok":true,"result":{"success":true,"data":{"summary":"当前共有 3 条笔记，主要集中在开发修复、内容准备和协作事项。","count":3,"categories":["开发修复","内容准备","协作事项"],"orders":[1,2,3]}}}

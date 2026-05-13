@@ -1,0 +1,258 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --panel-soft: #eef3f0;
+  --text: #18201d;
+  --muted: #68726d;
+  --line: #dce3df;
+  --accent: #246b55;
+  --accent-strong: #184c3b;
+  --accent-soft: #dcebe5;
+  --danger: #9c3428;
+  --shadow: 0 14px 38px rgba(22, 32, 28, 0.11);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(36, 107, 85, 0.12), transparent 38%),
+    linear-gradient(315deg, rgba(166, 82, 55, 0.13), transparent 42%),
+    var(--bg);
+  color: var(--text);
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
+.app-shell {
+  width: min(100%, 720px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.topbar,
+.composer,
+.notes-panel,
+.summary-panel {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(220, 227, 223, 0.92);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+h2,
+label {
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.brand p,
+.counter,
+#input-hint,
+.note-meta,
+.empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.counter {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--panel-soft);
+  white-space: nowrap;
+}
+
+.composer,
+.notes-panel,
+.summary-panel {
+  padding: 18px;
+}
+
+.composer {
+  display: grid;
+  gap: 10px;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 86px;
+  max-height: 180px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text);
+  background: #fbfcfb;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(36, 107, 85, 0.15);
+}
+
+.composer-actions,
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#save-note,
+#summarize-notes {
+  min-height: 38px;
+  padding: 0 15px;
+  background: var(--accent);
+  color: white;
+  font-weight: 720;
+}
+
+#summarize-notes {
+  background: var(--accent-strong);
+}
+
+.note-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.note-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+}
+
+.note-content {
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.note-meta {
+  margin-top: 4px;
+}
+
+.delete-note {
+  align-self: start;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ead5d1;
+  background: #fff5f3;
+  color: var(--danger);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.empty {
+  padding: 20px 0 4px;
+  text-align: center;
+}
+
+.summary-panel {
+  display: grid;
+  gap: 8px;
+}
+
+#summary-output {
+  line-height: 1.55;
+  color: #26332e;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .app-shell {
+    padding: 14px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .composer-actions,
+  .panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #save-note,
+  #summarize-notes {
+    width: 100%;
+  }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Mini Notes</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">N</span>
+          <div>
+            <h1>Mini Notes</h1>
+            <p id="connection-label">Standalone preview</p>
+          </div>
+        </div>
+        <span class="counter" id="note-count">0 notes</span>
+      </header>
+
+      <section class="composer" aria-label="Create note">
+        <label for="note-input">New note</label>
+        <textarea
+          id="note-input"
+          rows="3"
+          maxlength="240"
+          placeholder="例如：明天跟客户 follow up"
+        ></textarea>
+        <div class="composer-actions">
+          <span id="input-hint">0 / 240</span>
+          <button id="save-note" type="button">Save</button>
+        </div>
+      </section>
+
+      <section class="notes-panel" aria-label="Saved notes">
+        <div class="panel-heading">
+          <h2>Notes</h2>
+          <button id="summarize-notes" type="button">Summarize</button>
+        </div>
+        <ol class="note-list" id="note-list" aria-live="polite"></ol>
+      </section>
+
+      <section class="summary-panel" aria-label="Summary">
+        <h2>Summary</h2>
+        <p id="summary-output">保存几条笔记后点击 Summarize。</p>
+      </section>
+    </main>
+
+    <script src="/static/anna-apps/_sdk/0.1.0/index.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>
