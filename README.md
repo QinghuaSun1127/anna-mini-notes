@@ -46,6 +46,11 @@ On Windows, make sure your Python user Scripts directory is on `PATH`, for
 example `C:\Users\<you>\AppData\Roaming\Python\Python39\Scripts`. `npm run dev`
 also prepends the common user Scripts paths automatically.
 
+This repository includes a small Windows compatibility bridge at
+`scripts/anna-bridge-windows.py`. It keeps the official
+`anna-app-runtime-local` dispatcher, but avoids a Windows `asyncio` stdio pipe
+issue seen when the CLI launches the bridge through `uvx`.
+
 The Mini Notes tool itself uses only the Python standard library. Python 3.9+ is
 enough.
 
