@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
@@ -7,12 +7,13 @@ import os from "node:os";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 const cli = join(root, "node_modules", "@anna-ai", "cli", "dist", "cli.js");
-const bridgeDist = join(root, "node_modules", "@anna-ai", "cli", "dist", "bridge-CBcQUQGU.js");
+const cliDist = join(root, "node_modules", "@anna-ai", "cli", "dist");
 
 const candidates = [
-  join(os.homedir(), "AppData", "Roaming", "Python", "Python39", "Scripts"),
-  join(os.homedir(), "AppData", "Roaming", "Python", "Python310", "Scripts"),
-  join(os.homedir(), "AppData", "Roaming", "Python", "Python311", "Scripts"),
+  ...["39", "310", "311", "312", "313"].map((version) =>
+    join(os.homedir(), "AppData", "Roaming", "Python", `Python${version}`, "Scripts"),
+  ),
+  join(os.homedir(), ".cargo", "bin"),
   join(os.homedir(), ".local", "bin"),
 ];
 
@@ -23,6 +24,7 @@ const env = {
 };
 
 patchWindowsBridgeCommand();
+patchWindowsDoctorKeyMode();
 
 const args = [cli, ...process.argv.slice(2)];
 const child = spawn(process.execPath, args, {
@@ -40,12 +42,19 @@ child.on("exit", (code, signal) => {
 });
 
 function patchWindowsBridgeCommand() {
-  if (process.platform !== "win32" || !existsSync(bridgeDist)) return;
+  if (process.platform !== "win32" || !existsSync(cliDist)) return;
+  const bridgeDist = findBridgeDist();
+  if (!bridgeDist) return;
+
   const body = readFileSync(bridgeDist, "utf8");
-  if (body.includes("anna-bridge-windows.py")) return;
 
   const runtime = join(root, "scripts", "anna-bridge-windows.py").replaceAll("\\", "/");
   const marker = "const version = this.opts.runtimeVersion ?? PINNED_RUNTIME_VERSION;";
+  const previousPatch =
+    /\n\t\tif \(process\.platform === "win32"\) return \[\n\t\t\t"uv",\n\t\t\t"run",\n\t\t\t"--with",\n\t\t\t`anna-app-runtime-local==\$\{version\}`,\n\t\t\t"python",\n\t\t\t"[^"]*anna-bridge-windows\.py"\n\t\t\];/;
+  const unpatched = body.replace(previousPatch, "");
+  if (!unpatched.includes(marker)) return;
+
   const replacement = `${marker}
 \t\tif (process.platform === "win32") return [
 \t\t\t"uv",
@@ -56,6 +65,31 @@ function patchWindowsBridgeCommand() {
 \t\t\t"${runtime}"
 \t\t];`;
 
-  if (!body.includes(marker)) return;
-  writeFileSync(bridgeDist, body.replace(marker, replacement));
+  const next = unpatched.replace(marker, replacement);
+  if (next !== body) writeFileSync(bridgeDist, next);
+}
+
+function findBridgeDist() {
+  return readdirSync(cliDist)
+    .filter((name) => /^bridge-.*\.js$/.test(name))
+    .map((name) => join(cliDist, name))
+    .find((candidate) => {
+      const body = readFileSync(candidate, "utf8");
+      return body.includes("class PythonBridge") && body.includes("PINNED_RUNTIME_VERSION");
+    });
+}
+
+function patchWindowsDoctorKeyMode() {
+  if (process.platform !== "win32" || !existsSync(cliDist)) return;
+  const doctorDist = readdirSync(cliDist)
+    .filter((name) => /^doctor-.*\.js$/.test(name))
+    .map((name) => join(cliDist, name))
+    .find((candidate) => readFileSync(candidate, "utf8").includes("expected 0600"));
+  if (!doctorDist) return;
+
+  const body = readFileSync(doctorDist, "utf8");
+  const marker = "if (mode === 384)";
+  const replacement = 'if (process.platform === "win32" || mode === 384)';
+  if (body.includes(replacement) || !body.includes(marker)) return;
+  writeFileSync(doctorDist, body.replace(marker, replacement));
 }

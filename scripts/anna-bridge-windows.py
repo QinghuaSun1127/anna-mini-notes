@@ -77,7 +77,18 @@ async def _windows_direct_invoke(
             "command_id": "local",
         }
 
-    msg = json.loads(first_json)
+    try:
+        msg = json.loads(first_json)
+    except json.JSONDecodeError as exc:
+        return {
+            "success": True,
+            "data": {
+                "success": False,
+                "error": f"plugin produced invalid JSON-RPC response: {exc}",
+            },
+            "command_id": "local",
+        }
+
     if "error" in msg:
         err = msg["error"] or {}
         return {

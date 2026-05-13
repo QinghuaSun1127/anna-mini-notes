@@ -23,6 +23,9 @@ miniapp/
 │       └── README.md
 ├── fixtures/
 │   └── happy-path.jsonl
+├── scripts/
+│   ├── anna-app-with-uv-path.mjs
+│   └── anna-bridge-windows.py
 └── tests/
     └── test_tool_contract.py
 ```
@@ -79,6 +82,15 @@ anna-app doctor
 anna-app dev
 ```
 
+On Windows, `npm run dev` and `npm run doctor` use
+`scripts/anna-app-with-uv-path.mjs`. The wrapper keeps the official Anna CLI,
+prepends common `uv` install locations to `PATH`, and patches only the local
+`node_modules/@anna-ai/cli` bridge launcher so `anna-app dev` can start the
+runtime reliably on Windows. It also avoids a Windows-only false negative in
+the CLI's Unix-style `dev.key` mode check, where Node reports `666` even after
+`chmod 600`. macOS and Linux keep the CLI's default `uvx` launcher and key-mode
+check.
+
 `anna-app dev` serves the static bundle in the local Anna harness. The UI calls:
 
 ```js
@@ -91,6 +103,20 @@ anna.tools.invoke({
 
 The app does not create a separate business API. The Summarize button goes
 through the Anna runtime host API and then into the local Executa process.
+
+## Submission checklist
+
+For review, run these commands from the repository root:
+
+```bash
+npm install
+npm run doctor
+npm run check
+npm run dev
+```
+
+Manual UI check: open the local harness URL printed by `npm run dev`, add a few
+notes, click Summarize, and confirm the RPC log shows `tools.invoke`.
 
 ## Manually test Executa JSON-RPC
 
@@ -106,14 +132,26 @@ Invoke:
 echo '{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"summarize","arguments":{"notes":[{"order":1,"content":"修复登录 bug"},{"order":2,"content":"跟设计沟通需求"},{"order":3,"content":"准备 workshop 提纲"}]}}}' | python executas/mini-notes/mini_notes_plugin.py
 ```
 
+In Windows PowerShell, set the pipe encoding first when sending Chinese text:
+
+```powershell
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+'{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"summarize","arguments":{"notes":[{"order":1,"content":"修复登录 bug"},{"order":2,"content":"跟设计沟通需求"},{"order":3,"content":"准备 workshop 提纲"}]}}}' | python executas\mini-notes\mini_notes_plugin.py
+```
+
 Expected invoke result:
 
 ```json
 {
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
   "success": true,
   "data": {
     "summary": "当前共有 3 条笔记，主要集中在开发修复、内容准备和协作事项。",
     "count": 3
+  }
   }
 }
 ```
@@ -129,6 +167,9 @@ npm test
 `bundle/` is the UI bundle. Anna opens `bundle/index.html` inside the app
 runtime iframe. `bundle/app.js` connects to the host with
 `AnnaAppRuntime.connect()` and invokes the summarizer through `anna.tools.invoke`.
+There is no fetch/WebSocket/business API path for summarization; if the Anna
+runtime SDK is unavailable, the UI can still save and display notes, but
+Summarize reports that the Anna runtime is required.
 
 `manifest.json` is the Anna App contract. It declares the static bundle entry,
 the window settings, the required host permission `tools.invoke`, and the

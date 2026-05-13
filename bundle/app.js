@@ -28,7 +28,7 @@ async function init() {
     els.connection.textContent = "Connected to Anna runtime";
     await anna.window.set_title({ title: "Mini Notes" }).catch(() => {});
   } catch (error) {
-    anna = createPreviewRuntime();
+    anna = createUnavailableRuntime();
     els.connection.textContent = "Standalone preview";
     console.warn("[mini-notes] using preview runtime:", error?.message || error);
   }
@@ -152,47 +152,17 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
-function createPreviewRuntime() {
+function createUnavailableRuntime() {
   return {
     tools: {
-      async invoke({ args }) {
-        return localRuleSummary(args?.notes || []);
+      async invoke() {
+        throw new Error("Anna runtime is required to summarize notes");
       },
     },
     window: {
       async set_title() {},
     },
   };
-}
-
-function localRuleSummary(currentNotes) {
-  const count = currentNotes.length;
-  if (!count) return { summary: "暂无笔记可总结。" };
-
-  const categories = classify(currentNotes.map((note) => note.content).join(" "));
-  const categoryText = categories.length ? `，主要集中在${joinChinese(categories)}` : "";
-  return {
-    summary: `当前共有 ${count} 条笔记${categoryText}。`,
-  };
-}
-
-function classify(text) {
-  const groups = [
-    { label: "开发修复", words: ["bug", "fix", "修复", "登录", "代码", "开发"] },
-    { label: "客户跟进", words: ["客户", "follow", "跟进", "会议"] },
-    { label: "内容准备", words: ["workshop", "提纲", "内容", "准备", "想法"] },
-    { label: "协作事项", words: ["设计", "需求", "协作", "review"] },
-  ];
-  const lower = text.toLowerCase();
-  return groups
-    .filter((group) => group.words.some((word) => lower.includes(word.toLowerCase())))
-    .map((group) => group.label);
-}
-
-function joinChinese(items) {
-  if (items.length === 1) return items[0];
-  if (items.length === 2) return `${items[0]}和${items[1]}`;
-  return `${items.slice(0, -1).join("、")}和${items.at(-1)}`;
 }
 
 document.addEventListener("DOMContentLoaded", init);

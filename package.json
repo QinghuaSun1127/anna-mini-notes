@@ -8,7 +8,8 @@
     "doctor": "node scripts/anna-app-with-uv-path.mjs doctor",
     "validate": "anna-app validate --strict",
     "test:tool": "python tests/test_tool_contract.py",
-    "test": "npm run test:tool"
+    "test": "npm run test:tool",
+    "check": "npm run validate && npm test && npx anna-app fixture verify fixtures/happy-path.jsonl"
   },
   "devDependencies": {
     "@anna-ai/cli": "^0.1.9"

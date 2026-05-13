@@ -137,7 +137,19 @@ def send(message: dict[str, Any]) -> None:
     sys.stdout.flush()
 
 
+def _configure_stdio() -> None:
+    stdin_reconfigure = getattr(sys.stdin, "reconfigure", None)
+    if stdin_reconfigure is not None:
+        stdin_reconfigure(encoding="utf-8-sig")
+
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
+
 def main() -> None:
+    _configure_stdio()
     print(f"[mini-notes] {MANIFEST['display_name']} ready", file=sys.stderr)
     for line in sys.stdin:
         line = line.strip()
@@ -156,6 +168,16 @@ def main() -> None:
             )
             continue
 
+        if not isinstance(request, dict):
+            send(
+                {
+                    "jsonrpc": "2.0",
+                    "id": None,
+                    "error": {"code": -32600, "message": "request must be an object"},
+                }
+            )
+            continue
+
         req_id = request.get("id")
         method = request.get("method")
         handler = METHODS.get(method)
@@ -170,7 +192,19 @@ def main() -> None:
             continue
 
         try:
-            result = handler(request.get("params") or {})
+            params = request.get("params")
+            if params is None:
+                params = {}
+            if not isinstance(params, dict):
+                send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": req_id,
+                        "error": {"code": -32602, "message": "params must be an object"},
+                    }
+                )
+                continue
+            result = handler(params)
             send({"jsonrpc": "2.0", "id": req_id, "result": result})
         except Exception as exc:
             send(
