@@ -2,7 +2,7 @@
   "slug": "mini-notes",
   "name": "Mini Notes",
   "tagline": "A minimal Anna-style notes app with a local summarizer tool.",
-  "description": "Mini Notes demonstrates the smallest useful Anna App loop: a sandboxed UI bundle saves short notes locally in the window, then calls a local Executa tool through AnnaAppRuntime and anna.tools.invoke to produce a rule-based summary.",
+  "description": "Mini Notes demonstrates a useful Anna App loop: a sandboxed UI bundle saves tagged short notes in browser localStorage, supports search, undo, Markdown import/export, and visible/all summary scope, then calls a local Executa tool through AnnaAppRuntime and anna.tools.invoke to produce a structured rule-based summary with categories, tags, highlights, and action items.",
   "category": "productivity",
   "logo_url": "https://raw.githubusercontent.com/QinghuaSun1127/anna-mini-notes/main/bundle/icon.svg",
   "cover_url": "https://raw.githubusercontent.com/QinghuaSun1127/anna-mini-notes/main/bundle/icon.svg",

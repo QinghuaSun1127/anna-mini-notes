@@ -7,11 +7,14 @@
     "dev": "node scripts/anna-app-with-uv-path.mjs dev",
     "doctor": "node scripts/anna-app-with-uv-path.mjs doctor",
     "validate": "anna-app validate --strict",
-    "test:tool": "python tests/test_tool_contract.py",
+    "test:tool": "node scripts/run-python-test.mjs",
+    "test:ui": "playwright test",
+    "screenshot": "node scripts/capture-screenshot.mjs",
     "test": "npm run test:tool",
     "check": "npm run validate && npm test && npx anna-app fixture verify fixtures/happy-path.jsonl"
   },
   "devDependencies": {
-    "@anna-ai/cli": "^0.1.9"
+    "@anna-ai/cli": "^0.1.9",
+    "@playwright/test": "^1.56.1"
   }
 }

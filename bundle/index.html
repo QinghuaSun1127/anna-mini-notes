@@ -19,15 +19,32 @@
         </div>
         <span class="counter" id="note-count">0 notes</span>
       </header>
+      <div class="undo-bar" id="undo-bar" hidden>
+        <span id="undo-message"></span>
+        <button id="undo-action" class="secondary-button" type="button">Undo</button>
+      </div>
 
       <section class="composer" aria-label="Create note">
-        <label for="note-input">New note</label>
-        <textarea
-          id="note-input"
-          rows="3"
-          maxlength="240"
-          placeholder="例如：明天跟客户 follow up"
-        ></textarea>
+        <div class="composer-grid">
+          <div>
+            <label for="note-input">New note</label>
+            <textarea
+              id="note-input"
+              rows="3"
+              maxlength="240"
+              placeholder="例如：明天跟客户 follow up"
+            ></textarea>
+          </div>
+          <div class="tag-field">
+            <label for="tag-input">Tags</label>
+            <input
+              id="tag-input"
+              type="text"
+              maxlength="80"
+              placeholder="例如：work, bug, idea"
+            />
+          </div>
+        </div>
         <div class="composer-actions">
           <span id="input-hint">0 / 240</span>
           <button id="save-note" type="button">Save</button>
@@ -37,14 +54,36 @@
       <section class="notes-panel" aria-label="Saved notes">
         <div class="panel-heading">
           <h2>Notes</h2>
-          <button id="summarize-notes" type="button">Summarize</button>
+          <div class="panel-actions">
+            <button id="import-notes" class="secondary-button" type="button">Import</button>
+            <button id="export-notes" class="secondary-button" type="button">Export</button>
+            <button id="clear-notes" class="secondary-button" type="button">Clear</button>
+            <button id="summarize-notes" type="button">Summarize</button>
+          </div>
         </div>
+        <input id="import-file" type="file" accept=".md,text/markdown,text/plain" hidden />
+        <div class="scope-row">
+          <label for="summary-scope">Summarize</label>
+          <select id="summary-scope">
+            <option value="visible">Visible notes</option>
+            <option value="all">All notes</option>
+          </select>
+        </div>
+        <input
+          id="note-search"
+          class="search-input"
+          type="search"
+          placeholder="Search notes or tags"
+        />
         <ol class="note-list" id="note-list" aria-live="polite"></ol>
       </section>
 
       <section class="summary-panel" aria-label="Summary">
-        <h2>Summary</h2>
-        <p id="summary-output">保存几条笔记后点击 Summarize。</p>
+        <div class="summary-heading">
+          <h2>Summary</h2>
+          <button id="copy-summary" class="secondary-button" type="button" disabled>Copy</button>
+        </div>
+        <div id="summary-output">保存几条笔记后点击 Summarize。</div>
       </section>
     </main>
 

@@ -8,4 +8,6 @@ build/
 *.egg-info/
 npm-debug.log*
 anna-dev.*.log
+playwright-report/
+test-results/
 *.pdf

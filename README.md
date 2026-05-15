@@ -1,10 +1,41 @@
 # Mini Notes Anna App
 
-Mini Notes is a minimal Anna-style app for the interview task. It includes a
-static UI bundle, a local Executa-style summarizer tool, and a manifest that
-wires the UI to the tool through Anna's local app harness.
+Mini Notes is a small Anna App for capturing short notes and turning them into
+a structured local summary. It includes a static UI bundle, a local
+Executa-style Python summarizer, and a manifest that connects the UI to the
+tool through Anna's local app harness.
 
-## What is included
+The app is intentionally small, but it now behaves like a practical note tool:
+notes are saved in browser `localStorage`, can be edited, imported, exported,
+searched, restored after accidental deletion, and summarized with structured
+categories, highlights, action items, and a suggested next step.
+
+![Mini Notes screenshot](assets/screenshot-1.png)
+
+## Features
+
+- Add short notes up to 240 characters.
+- Add lightweight comma-separated tags.
+- Persist notes locally in the browser with `localStorage`.
+- Edit or delete individual notes.
+- Clear all notes when starting over.
+- Undo the latest delete, clear, or import operation.
+- Search across note content and tags.
+- Choose whether Summarize uses visible search results or all notes.
+- Import compatible Markdown exports back into the app.
+- Export the current note view as Markdown.
+- Copy the latest structured summary to the clipboard.
+- Summarize notes through Anna's `tools.invoke` host API.
+- Return structured summary data from the local Python Executa:
+  - `summary`
+  - `categories`
+  - `tags`
+  - `highlights`
+  - `action_items`
+  - `suggested_next_step`
+- Run without an external LLM, external API, database, or cloud service.
+
+## Project structure
 
 ```text
 miniapp/
@@ -25,10 +56,43 @@ miniapp/
 │   └── happy-path.jsonl
 ├── scripts/
 │   ├── anna-app-with-uv-path.mjs
-│   └── anna-bridge-windows.py
+│   ├── anna-bridge-windows.py
+│   └── run-python-test.mjs
 └── tests/
     └── test_tool_contract.py
 ```
+
+## How it works
+
+`bundle/` contains the user interface. The browser keeps notes in local state
+and mirrors them into `localStorage`, so refreshing the app does not lose the
+current note list. Each note can also carry up to six tags. The search box
+filters the visible notes by content or tag. Export uses the current visible
+note set. Summarize can use either the current visible set or all notes,
+depending on the selected scope.
+
+When the user clicks Summarize, `bundle/app.js` calls Anna's host API:
+
+```js
+anna.tools.invoke({
+  tool_id: "tool-test-mini-notes-12345678",
+  method: "summarize",
+  args: { notes }
+});
+```
+
+`manifest.json` declares the required `tools.invoke` permission and allow-lists
+the required Executa ID. This means the UI can call the Mini Notes summarizer,
+not arbitrary local tools.
+
+`executas/mini-notes/mini_notes_plugin.py` implements a line-delimited JSON-RPC
+2.0 tool over stdin/stdout. Anna calls `describe` to inspect the tool, then
+calls `invoke` with `tool="summarize"` and the current notes. The Python tool
+uses keyword rules to produce a deterministic local summary.
+
+The local harness is the development version of the Anna runtime. It opens the
+UI, reads the manifest, starts the local Executa, and connects
+`anna.tools.invoke` to the Python process.
 
 ## Install dependencies
 
@@ -42,144 +106,149 @@ The local harness also needs `uvx`. If `anna-app doctor` reports that `uv` is
 missing, install it once:
 
 ```bash
-python -m pip install --user uv
+brew install uv
 ```
 
-On Windows, make sure your Python user Scripts directory is on `PATH`, for
-example `C:\Users\<you>\AppData\Roaming\Python\Python39\Scripts`. `npm run dev`
-also prepends the common user Scripts paths automatically.
-
-This repository includes a small Windows compatibility bridge at
-`scripts/anna-bridge-windows.py`. It keeps the official
-`anna-app-runtime-local` dispatcher, but avoids a Windows `asyncio` stdio pipe
-issue seen when the CLI launches the bridge through `uvx`.
-
-The Mini Notes tool itself uses only the Python standard library. Python 3.9+ is
-enough.
-
-Optional local Executa install:
+or:
 
 ```bash
-cd executas/mini-notes
-python -m pip install -e .
+python3 -m pip install --user uv
 ```
 
-## Run the Anna local harness
+The Mini Notes tool itself uses only the Python standard library. Python 3.9+
+is enough.
+
+## Run locally
 
 From the repository root:
 
 ```bash
-npm run validate
-npm run doctor
-npm run dev
-```
-
-Those scripts run:
-
-```bash
-anna-app validate --strict
-anna-app doctor
-anna-app dev
-```
-
-On Windows, `npm run dev` and `npm run doctor` use
-`scripts/anna-app-with-uv-path.mjs`. The wrapper keeps the official Anna CLI,
-prepends common `uv` install locations to `PATH`, and patches only the local
-`node_modules/@anna-ai/cli` bridge launcher so `anna-app dev` can start the
-runtime reliably on Windows. It also avoids a Windows-only false negative in
-the CLI's Unix-style `dev.key` mode check, where Node reports `666` even after
-`chmod 600`. macOS and Linux keep the CLI's default `uvx` launcher and key-mode
-check.
-
-`anna-app dev` serves the static bundle in the local Anna harness. The UI calls:
-
-```js
-anna.tools.invoke({
-  tool_id: "tool-test-mini-notes-12345678",
-  method: "summarize",
-  args: { notes }
-});
-```
-
-The app does not create a separate business API. The Summarize button goes
-through the Anna runtime host API and then into the local Executa process.
-
-## Submission checklist
-
-For review, run these commands from the repository root:
-
-```bash
-npm install
 npm run doctor
 npm run check
 npm run dev
 ```
 
-Manual UI check: open the local harness URL printed by `npm run dev`, add a few
-notes, click Summarize, and confirm the RPC log shows `tools.invoke`.
+`npm run dev` prints a local dashboard URL, usually:
 
-## Manually test Executa JSON-RPC
+```text
+http://localhost:5180/
+```
 
-Describe:
+Open that URL, add a few notes, click Summarize, and confirm the dashboard log
+shows a `tools.invoke` call.
+
+## Import/export format
+
+Export creates a Markdown file with this shape:
+
+```md
+# Mini Notes Export
+
+Exported: 2026-05-15, 10:00:00 AM
+
+## Notes
+
+### Note 1
+
+修复登录 bug
+
+Tags: #dev #work
+```
+
+Import reads the same `### Note ...` blocks and optional `Tags:` lines. Imported
+notes are appended to the current list and can be undone immediately.
+
+## Test
+
+Run all checks:
 
 ```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"describe"}' | python executas/mini-notes/mini_notes_plugin.py
+npm run check
 ```
 
-Invoke:
+This runs:
+
+- `anna-app validate --strict`
+- the Python tool contract tests
+- fixture verification for `fixtures/happy-path.jsonl`
+
+Run the browser UI tests:
 
 ```bash
-echo '{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"summarize","arguments":{"notes":[{"order":1,"content":"修复登录 bug"},{"order":2,"content":"跟设计沟通需求"},{"order":3,"content":"准备 workshop 提纲"}]}}}' | python executas/mini-notes/mini_notes_plugin.py
+npm run test:ui
 ```
 
-In Windows PowerShell, set the pipe encoding first when sending Chinese text:
+The UI tests use Playwright with a mocked `AnnaAppRuntime`. They cover adding
+tagged notes, search, Visible/All summary scope, copy, localStorage persistence,
+delete undo, Markdown import, and Markdown export.
 
-```powershell
-$OutputEncoding = [System.Text.Encoding]::UTF8
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-'{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"summarize","arguments":{"notes":[{"order":1,"content":"修复登录 bug"},{"order":2,"content":"跟设计沟通需求"},{"order":3,"content":"准备 workshop 提纲"}]}}}' | python executas\mini-notes\mini_notes_plugin.py
+If this is the first time running Playwright on a machine, install the browser
+once:
+
+```bash
+npx playwright install chromium
 ```
 
-Expected invoke result:
+Update the README screenshot after UI changes:
 
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 2,
-  "result": {
-  "success": true,
-  "data": {
-    "summary": "当前共有 3 条笔记，主要集中在开发修复、内容准备和协作事项。",
-    "count": 3
-  }
-  }
-}
+```bash
+npm run screenshot
 ```
 
-You can also run the included contract test:
+The screenshot script seeds a mocked Anna runtime and writes
+`assets/screenshot-1.png`.
+
+Run only the tool tests:
 
 ```bash
 npm test
 ```
 
-## How bundle, manifest, and executas relate
+`scripts/run-python-test.mjs` chooses a compatible Python executable across
+macOS, Linux, and Windows.
 
-`bundle/` is the UI bundle. Anna opens `bundle/index.html` inside the app
-runtime iframe. `bundle/app.js` connects to the host with
-`AnnaAppRuntime.connect()` and invokes the summarizer through `anna.tools.invoke`.
-There is no fetch/WebSocket/business API path for summarization; if the Anna
-runtime SDK is unavailable, the UI can still save and display notes, but
-Summarize reports that the Anna runtime is required.
+## Manual JSON-RPC checks
 
-`manifest.json` is the Anna App contract. It declares the static bundle entry,
-the window settings, the required host permission `tools.invoke`, and the
-required Executa ID `tool-test-mini-notes-12345678`. The same ID is allow-listed
-under `ui.host_api.tools`, so the UI can call that tool and nothing broader.
+Describe:
 
-`executas/mini-notes/` is the local tool process. It implements JSON-RPC 2.0
-over stdin/stdout. Anna first calls `describe` to read the tool manifest, then
-calls `invoke` with `tool="summarize"` and the current notes. The tool returns a
-rule-driven summary without using an external LLM or external API.
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"describe"}' | python3 executas/mini-notes/mini_notes_plugin.py
+```
+
+Invoke:
+
+```bash
+echo '{"jsonrpc":"2.0","id":2,"method":"invoke","params":{"tool":"summarize","arguments":{"notes":[{"order":1,"content":"修复登录 bug","tags":["dev"]},{"order":2,"content":"跟设计沟通需求","tags":["work","design"]},{"order":3,"content":"准备 workshop 提纲","tags":["work"]}]}}}' | python3 executas/mini-notes/mini_notes_plugin.py
+```
+
+Expected result shape:
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": "当前共有 3 条笔记，主要集中在开发修复、内容准备和协作事项。",
+    "count": 3,
+    "categories": ["开发修复", "内容准备", "协作事项"],
+    "tags": ["dev", "work", "design"],
+    "highlights": ["修复登录 bug", "跟设计沟通需求", "准备 workshop 提纲"],
+    "action_items": [
+      "处理开发修复事项：修复登录 bug",
+      "确认协作细节：跟设计沟通需求",
+      "推进内容准备：准备 workshop 提纲"
+    ],
+    "suggested_next_step": "建议先处理开发修复类笔记，再补充沟通和内容准备事项。",
+    "orders": [1, 2, 3]
+  }
+}
+```
+
+On Windows PowerShell, set UTF-8 output before sending Chinese text:
+
+```powershell
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+```
 
 ## Notes on IDs
 
@@ -196,5 +265,14 @@ occurrences with the minted value.
 
 ## Privacy
 
-Notes stay in the in-memory UI state for this minimal exercise. No database,
-cloud deployment, external account, or third-party API is used.
+Notes are stored in browser `localStorage` for this app's local origin. The app
+does not use a database, cloud deployment, external account, external LLM, or
+third-party API.
+
+## Future improvements
+
+- Add richer Markdown import for arbitrary note files.
+- Add pinned notes and sort options.
+- Add a small UI test for edit/cancel flows.
+- Add optional Anna storage API support when available.
+- Replace the development tool ID with a minted Anna platform tool ID.
